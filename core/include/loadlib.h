@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2006-2012 SplinterGU (Fenix/Bennugd)
+ *  Copyright ï¿½ 2006-2012 SplinterGU (Fenix/Bennugd)
  *
  *  This file is part of Bennu - Game Development
  *
@@ -32,6 +32,8 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <winbase.h>
+#elif defined(__SWITCH__)
+#include <switch.h>
 #else
 #define _GNU_SOURCE
 #include <dlfcn.h>
@@ -68,7 +70,7 @@ static char * dliberror( void )
  * MODULAR                                                                     *
  *******************************************************************************/
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined (__SWITCH__) 
 #define dlclose(a)
 #endif
 
@@ -101,6 +103,9 @@ static void * dlibopen( const char * fname )
     
 #ifdef _WIN32
     void * hnd = LoadLibrary( fname );
+#elif defined(__SWITCH__)
+    // TODO
+    void * hnd = NULL;
 #else
     void * hnd = dlopen( fname, RTLD_NOW | RTLD_GLOBAL );
 #endif
@@ -117,6 +122,9 @@ static void * dlibopen( const char * fname )
                 sprintf( _fname, "%*.*slib%s", f - fname, f - fname, fname, f );
 #ifdef _WIN32
                 hnd = LoadLibrary( _fname );
+#elif defined(__SWITCH__)
+                // TODO
+                hnd = NULL;
 #else
                 hnd = dlopen( _fname, RTLD_NOW | RTLD_GLOBAL );
 #endif
@@ -126,7 +134,7 @@ static void * dlibopen( const char * fname )
 
     if ( !hnd )
     {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__SWITCH__)
         __dliberr = "Could not load library." ;
 #else
         __dliberr = dlerror() ;
@@ -178,14 +186,25 @@ static void * dlibaddr( void * _handle, const char * symbol )
         return NULL;
     }
 #else
+    #ifdef __SWITCH__
+        // TODO
+        void * addr;
+    #else
     void * addr = dlsym( handle->hnd, symbol ) ;
+    #endif
     if ( !addr )
     {
+        #ifdef __SWITCH__
+        __dliberr = "Symbol not found.";
+        #else
         __dliberr = dlerror() ;
+        #endif
         return NULL;
     }
 
-#ifndef TARGET_BEOS
+// Not sure what was going on here frankly
+// #ifndef TARGET_BEOS
+#if !defined(TARGET_BEOS) && !defined(__SWITCH__)
     Dl_info dli;
     dladdr( addr, &dli );
 
